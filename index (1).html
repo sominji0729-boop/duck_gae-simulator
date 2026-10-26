@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모바일 스마트폰 시뮬레이터</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 스마트폰 외형 프레임 */
+        .phone-container {
+            width: 390px;
+            height: 844px;
+            background-color: #000;
+            border-radius: 50px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6), 0 0 0 12px #2d2d2d, 0 0 0 15px #111;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 상단 노치 & 상태바 */
+        .status-bar {
+            height: 44px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 14px;
+            font-weight: 600;
+            position: absolute;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 25px;
+            background-color: #000;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 1001;
+        }
+
+        .status-icons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        /* 하단 홈 바 */
+        .home-bar {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 134px;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 100px;
+            z-index: 1000;
+            cursor: pointer;
+        }
+
+        /* 화면 공통 스타일 */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 1. 잠금화면 */
+        #lock-screen {
+            background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('image.png');
+            color: #fff;
+            padding: 70px 20px 40px 20px;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .lock-clock-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .lock-time {
+            font-size: 72px;
+            font-weight: 300;
+            letter-spacing: -2px;
+        }
+
+        .lock-date {
+            font-size: 18px;
+            font-weight: 500;
+            margin-top: 5px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .notifications-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        .notif-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 14px 18px;
+            border-radius: 18px;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .notif-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .notif-body {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* 비밀번호 입력 팝업 */
+        #pin-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(25px);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .pin-dots {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .pin-dot {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .pin-dot.filled {
+            background-color: #fff;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 75px);
+            gap: 16px;
+        }
+
+        .key-btn {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            font-size: 26px;
+            font-weight: 400;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.1s;
+        }
+
+        .key-btn:active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .pin-cancel {
+            margin-top: 30px;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        /* 흔들림 애니메이션 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* 2. 배경화면 (Home Screen) */
+        #home-screen {
+            background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.2)), url('image.png');
+            padding: 60px 20px 30px 20px;
+            justify-content: space-between;
+            z-index: 50;
+        }
+
+        .widgets-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .widget {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 14px 18px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .weather-widget {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dday-widget {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .calendar-widget {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .cal-icon-box {
+            background: #ff3b30;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* 앱 그리드 */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px 12px;
+            padding: 0 10px;
+        }
+
+        .app-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .app-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 26px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: relative;
+            color: white;
+        }
+
+        .app-name {
+            font-size: 12px;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            font-weight: 500;
+        }
+
+        .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ff3b30;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid rgba(0,0,0,0.2);
+        }
+
+        /* 하단 독 바 */
+        .dock {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 30px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .dock .app-icon {
+            width: 55px;
+            height: 55px;
+        }
+
+        /* 앱 공통 화면 컨테이너 */
+        .app-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            padding-top: 44px;
+        }
+
+        .app-header {
+            padding: 14px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #007aff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* 3-1. 전화 앱 */
+        .call-list {
+            overflow-y: auto;
+            flex: 1;
+            background: #fff;
+        }
+
+        .call-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .call-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .call-info p {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .call-type {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .call-type.outgoing { color: #007aff; }
+        .call-type.incoming { color: #34c759; }
+        .call-type.missed { color: #ff3b30; }
+
+        /* 3-2. 문자 앱 */
+        .msg-container {
+            flex: 1;
+            background: #f1f3f5;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .bubble.received {
+            background: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* 3-3. 메모 앱 */
+        .note-content {
+            padding: 24px;
+            background: #fff;
+            flex: 1;
+        }
+
+        .note-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #212529;
+            margin-bottom: 16px;
+        }
+
+        .note-body {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #495057;
+        }
+
+        /* 3-4. 인터넷 앱 (Naver 스타일) */
+        .naver-header {
+            background: #03c75a;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .naver-logo {
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
+
+        .naver-search-bar {
+            background: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #888;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .search-history-view {
+            background: white;
+            flex: 1;
+            padding: 15px 20px;
+            display: none;
+        }
+
+        .history-title {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .history-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f1f1;
+            font-size: 15px;
+            color: #333;
+        }
+
+        /* 3-5. 카카오톡 앱 */
+        .kakao-header {
+            background: #fee500;
+            color: #3c1e1e;
+            padding: 14px 20px;
+            font-weight: bold;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kakao-tabs {
+            display: flex;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+        }
+
+        .kakao-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #888;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .kakao-tab.active {
+            color: #3c1e1e;
+            border-bottom-color: #3c1e1e;
+        }
+
+        .kakao-list {
+            flex: 1;
+            background: #fff;
+            overflow-y: auto;
+        }
+
+        .chat-room-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            gap: 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f9f9f9;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            background: #e1e2e6;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #555;
+            position: relative;
+        }
+
+        .chat-info {
+            flex: 1;
+        }
+
+        .chat-name {
+            font-size: 15px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 4px;
+        }
+
+        .chat-last-msg {
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* 카카오톡 채팅방 상세 */
+        #kakao-chat-room {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #b2c7d9;
+            z-index: 250;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-room-header {
+            background: #b2c7d9;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-weight: bold;
+            font-size: 16px;
+            color: #222;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .date-divider {
+            text-align: center;
+            font-size: 11px;
+            color: #fff;
+            background: rgba(0,0,0,0.15);
+            padding: 4px 12px;
+            border-radius: 12px;
+            align-self: center;
+            margin: 10px 0;
+        }
+
+        .chat-bubble-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 70%;
+        }
+
+        .chat-bubble-row.mine {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .chat-bubble-row.theirs {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .chat-bubble {
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.4;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .chat-bubble-row.mine .chat-bubble {
+            background: #ffeb33;
+            color: #3c1e1e;
+            border-top-right-radius: 2px;
+        }
+
+        .chat-bubble-row.theirs .chat-bubble {
+            background: #ffffff;
+            color: #3c1e1e;
+            border-top-left-radius: 2px;
+        }
+
+        .chat-input-area {
+            background: #fff;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 10px 16px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .chat-send-btn {
+            background: #fee500;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #3c1e1e;
+            cursor: pointer;
+        }
+
+        /* 3-6. 전화 수신 및 통화 화면 시뮬레이션 */
+        #incoming-call-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.7)), url('image.png');
+            background-size: cover;
+            background-position: center;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 80px 30px 60px 30px;
+            color: white;
+            text-align: center;
+        }
+
+        .incoming-info h2 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .incoming-info p {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .incoming-actions {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+
+        .call-action-btn {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .accept-btn { background-color: #34c759; }
+        .decl-btn { background-color: #ff3b30; }
+
+        /* 통화 중 화면 */
+        #active-call-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('image.png');
+            background-size: cover;
+            background-position: center;
+            z-index: 510;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 80px 20px 50px 20px;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .call-status-text {
+            font-size: 14px;
+            opacity: 0.7;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .call-dialogue-box {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1.5;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+        }
+
+        /* 캘린더 어플 */
+        #calendar-app {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            padding-top: 44px;
+        }
+
+        .cal-grid-view {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .cal-day-header {
+            font-size: 13px;
+            font-weight: bold;
+            color: #888;
+        }
+
+        .cal-date-cell {
+            padding: 12px 0;
+            font-size: 15px;
+            font-weight: 500;
+            border-radius: 50%;
+        }
+
+        .cal-date-cell.marked {
+            background-color: #ff3b30;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <!-- 상태바 -->
+        <div class="status-bar">
+            <span id="current-time-status">21:22</span>
+            <div class="notch"></div>
+            <div class="status-icons">
+                <span>📶</span>
+                <span>🔋</span>
+            </div>
+        </div>
+
+        <!-- 1. 잠금 화면 -->
+        <div id="lock-screen" class="screen" onclick="showPinModal()">
+            <div class="lock-clock-container">
+                <div class="lock-time" id="lock-time-text">21:22</div>
+                <div class="lock-date">10월 26일 월요일</div>
+            </div>
+            <div class="notifications-list" onclick="event.stopPropagation(); showPinModal();">
+                <div class="notif-card">
+                    <div class="notif-header">
+                        <span>카카오톡</span>
+                        <span>1분 전</span>
+                    </div>
+                    <div class="notif-body">정형준 ♥ 외 1개의 메시지가 도착했습니다.</div>
+                </div>
+                <div class="notif-card">
+                    <div class="notif-header">
+                        <span>전화</span>
+                        <span>2시간 전</span>
+                    </div>
+                    <div class="notif-body">부재중 전화 1통 (정형준 ♥)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PIN 입력 모달 -->
+        <div id="pin-modal" class="hidden">
+            <div style="font-size: 18px; margin-bottom: 10px; font-weight: 500;">암호 입력</div>
+            <div style="font-size: 13px; color: #aaa; margin-bottom: 30px;">기본 비밀번호: 0911</div>
+            <div class="pin-dots" id="pin-dots">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+            <div class="keypad">
+                <button class="key-btn" onclick="pressKey(1)">1</button>
+                <button class="key-btn" onclick="pressKey(2)">2</button>
+                <button class="key-btn" onclick="pressKey(3)">3</button>
+                <button class="key-btn" onclick="pressKey(4)">4</button>
+                <button class="key-btn" onclick="pressKey(5)">5</button>
+                <button class="key-btn" onclick="pressKey(6)">6</button>
+                <button class="key-btn" onclick="pressKey(7)">7</button>
+                <button class="key-btn" onclick="pressKey(8)">8</button>
+                <button class="key-btn" onclick="pressKey(9)">9</button>
+                <button class="key-btn" style="visibility: hidden;"></button>
+                <button class="key-btn" onclick="pressKey(0)">0</button>
+                <button class="key-btn" onclick="pressKey('del')" style="font-size: 20px;">⌫</button>
+            </div>
+            <button class="pin-cancel" onclick="hidePinModal()">취소</button>
+        </div>
+
+        <!-- 2. 배경화면 (Home Screen) -->
+        <div id="home-screen" class="screen hidden">
+            <div class="widgets-area">
+                <!-- 날씨 위젯 -->
+                <div class="widget weather-widget">
+                    <div>
+                        <div style="font-size: 12px; opacity: 0.8;">서울시 강남구</div>
+                        <div style="font-size: 24px; font-weight: bold; margin-top: 2px;">16°C</div>
+                    </div>
+                    <div style="font-size: 32px;">🌙</div>
+                </div>
+                <!-- 디데이 위젯 -->
+                <div class="widget dday-widget">
+                    HJYH +911일 ❤️
+                </div>
+                <!-- 달력 위젯 -->
+                <div class="widget calendar-widget" onclick="openApp('calendar-app')">
+                    <div class="cal-icon-box">
+                        <span style="font-size: 10px;">10월</span>
+                        <span style="font-size: 16px; font-weight: bold; line-height: 1;">26</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: bold;">10월 26일 (월)</div>
+                        <div style="font-size: 12px; opacity: 0.9; margin-top: 2px;">일정: 데이트♥</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 앱 그리드 -->
+            <div class="app-grid">
+                <div class="app-item" onclick="openApp('browser-app')">
+                    <div class="app-icon" style="background: #03c75a;">🌐</div>
+                    <span class="app-name">인터넷</span>
+                </div>
+                <div class="app-item" onclick="openApp('kakao-app')">
+                    <div class="app-icon" style="background: #fee500; color: #3c1e1e;">💬<span class="badge">2</span></div>
+                    <span class="app-name">카카오톡</span>
+                </div>
+                <div class="app-item" onclick="alert('준비 중인 앱입니다.')">
+                    <div class="app-icon" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);">📸</div>
+                    <span class="app-name">인스타그램</span>
+                </div>
+                <div class="app-item" onclick="alert('준비 중인 앱입니다.')">
+                    <div class="app-icon" style="background: #ff0000;">▶️</div>
+                    <span class="app-name">유튜브</span>
+                </div>
+                <div class="app-item" onclick="alert('준비 중인 앱입니다.')">
+                    <div class="app-icon" style="background: #5865f2;">🎮</div>
+                    <span class="app-name">디스코드</span>
+                </div>
+            </div>
+
+            <!-- 하단 독 바 (Dock) -->
+            <div class="dock">
+                <div class="app-item" onclick="openApp('phone-app')">
+                    <div class="app-icon" style="background: #34c759;"><span class="badge">1</span>📞</div>
+                </div>
+                <div class="app-item" onclick="openApp('msg-app')">
+                    <div class="app-icon" style="background: #007aff;">✉️</div>
+                </div>
+                <div class="app-item" onclick="openApp('note-app')">
+                    <div class="app-icon" style="background: #ff9500;">📝</div>
+                </div>
+                <div class="app-item" onclick="alert('설정 기능')">
+                    <div class="app-icon" style="background: #8e8e93;">⚙️</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3-1. 전화 앱 -->
+        <div id="phone-app" class="app-screen hidden">
+            <div class="app-header">
+                <span>최근 통화</span>
+                <button class="back-btn" onclick="goHome()">홈</button>
+            </div>
+            <div class="call-list">
+                <div class="call-item"><div class="call-info"><h4>정형준 ♥</h4><p>금요일</p></div><span class="call-type outgoing">발신</span></div>
+                <div class="call-item"><div class="call-info"><h4>슬기누나</h4><p>금요일</p></div><span class="call-type incoming">수신</span></div>
+                <div class="call-item"><div class="call-info"><h4>정형준 ♥</h4><p>목요일</p></div><span class="call-type outgoing">발신</span></div>
+                <div class="call-item"><div class="call-info"><h4>정형준 ♥</h4><p>수요일</p></div><span class="call-type incoming">수신</span></div>
+                <div class="call-item"><div class="call-info"><h4>010-1234-5678</h4><p>수요일</p></div><span class="call-type outgoing">발신</span></div>
+                <div class="call-item"><div class="call-info"><h4>한솔이형</h4><p>수요일</p></div><span class="call-type incoming">통화 완료</span></div>
+                <div class="call-item"><div class="call-info"><h4>정형준 ♥</h4><p>화요일</p></div><span class="call-type outgoing">발신</span></div>
+                <div class="call-item"><div class="call-info"><h4>010-9876-5432</h4><p>화요일</p></div><span class="call-type missed">부재중</span></div>
+            </div>
+        </div>
+
+        <!-- 3-2. 문자 앱 -->
+        <div id="msg-app" class="app-screen hidden">
+            <div class="app-header">
+                <span>정형준 ♥ 메시지함</span>
+                <button class="back-btn" onclick="goHome()">홈</button>
+            </div>
+            <div class="msg-container">
+                <div style="text-align: center; font-size: 11px; color: #888; margin-bottom: 4px;">일주일 전</div>
+                <div class="bubble received">왜 카톡 안봐 ㅠ</div>
+                <div class="bubble received">카톡 또 차단했어?</div>
+                <div class="bubble received">형이 잘못했다니까</div>
+                <div class="bubble received">일단 전화를 하자</div>
+            </div>
+        </div>
+
+        <!-- 3-3. 메모 앱 -->
+        <div id="note-app" class="app-screen hidden">
+            <div class="app-header">
+                <span>메모</span>
+                <button class="back-btn" onclick="goHome()">홈</button>
+            </div>
+            <div class="note-content">
+                <div class="note-title">미친놈</div>
+                <div class="note-body">이제 진짜 정형준 그만 패야지 다짐한게 엊그제같은데 또 패버리고 말았다 저새끼가 먼저 잘못하는건데 내가 용서해주는 것도 정도가 있다</div>
+            </div>
+        </div>
+
+        <!-- 3-4. 인터넷 앱 -->
+        <div id="browser-app" class="app-screen hidden">
+            <div class="app-header">
+                <span>인터넷</span>
+                <button class="back-btn" onclick="goHome()">홈</button>
+            </div>
+            <div class="naver-header">
+                <div class="naver-logo">NAVER</div>
+                <div class="naver-search-bar" onclick="toggleSearchHistory()">
+                    <span>검색어를 입력하세요</span>
+                    <span>🔍</span>
+                </div>
+            </div>
+            <div id="naver-main-content" style="flex: 1; background: #f5f6f8; padding: 20px;">
+                <div style="background: white; border-radius: 12px; padding: 20px; text-align: center; color: #666; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    네이버 메인 포털 화면입니다.<br>위의 검색창을 클릭해 보세요!
+                </div>
+            </div>
+            <div id="search-history-view" class="search-history-view">
+                <div class="history-title">최근 검색어 기록</div>
+                <div class="history-item">용서</div>
+                <div class="history-item">심신안정</div>
+                <div class="history-item">서울 데이트코스</div>
+                <div class="history-item">서울 호텔</div>
+            </div>
+        </div>
+
+        <!-- 3-5. 카카오톡 앱 -->
+        <div id="kakao-app" class="app-screen hidden">
+            <div class="kakao-header">
+                <span>카카오톡</span>
+                <button class="back-btn" style="color: #3c1e1e;" onclick="goHome()">홈</button>
+            </div>
+            <div class="kakao-tabs">
+                <div class="kakao-tab active" id="tab-friends" onclick="switchKakaoTab('friends')">친구</div>
+                <div class="kakao-tab" id="tab-chats" onclick="switchKakaoTab('chats')">채팅</div>
+            </div>
+            <!-- 친구 탭 내용 -->
+            <div id="kakao-friends-list" class="kakao-list">
+                <div class="chat-room-item" onclick="openKakaoChat()">
+                    <div class="avatar" style="background: #ffe600; color: #3c1e1e;">정</div>
+                    <div class="chat-info">
+                        <div class="chat-name">정형준 ♥</div>
+                        <div class="chat-last-msg">내일 전화 하면 내려와</div>
+                    </div>
+                </div>
+                <div class="chat-item-simple" style="padding: 10px 20px; font-size: 14px; color: #666; border-bottom: 1px solid #f9f9f9;">슬기누나</div>
+                <div class="chat-item-simple" style="padding: 10px 20px; font-size: 14px; color: #666; border-bottom: 1px solid #f9f9f9;">한솔이형</div>
+                <div class="chat-item-simple" style="padding: 10px 20px; font-size: 14px; color: #666; border-bottom: 1px solid #f9f9f9;">수현이형</div>
+                <div class="chat-item-simple" style="padding: 10px 20px; font-size: 14px; color: #666;">김일영</div>
+            </div>
+            <!-- 채팅 탭 내용 -->
+            <div id="kakao-chats-list" class="kakao-list hidden">
+                <div class="chat-room-item" onclick="openKakaoChat()">
+                    <div class="avatar" style="background: #ffe600; color: #3c1e1e;">정<span class="badge">1</span></div>
+                    <div class="chat-info">
+                        <div class="chat-name">정형준 ♥</div>
+                        <div class="chat-last-msg">내일 전화 하면 내려와</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 카카오톡 채팅방 상세 화면 -->
+        <div id="kakao-chat-room" class="hidden">
+            <div class="chat-room-header">
+                <button class="back-btn" onclick="closeKakaoChat()">〈</button>
+                <span>정형준 ♥</span>
+            </div>
+            <div class="chat-messages" id="chat-messages-container">
+                <div class="date-divider">10월 22일</div>
+                <div class="chat-bubble-row theirs"><div class="chat-bubble">26일에 시간 되는거 맞지?</div></div>
+                <div class="chat-bubble-row theirs"><div class="chat-bubble">부산 올려면 와도 되는데</div></div>
+                <div class="chat-bubble-row theirs"><div class="chat-bubble">너 힘들자낭 ㅠ</div></div>
+                <div class="chat-bubble-row mine"><div class="chat-bubble">서울에서 봐 구러면</div></div>
+
+                <div class="date-divider">10월 23일</div>
+                <div class="chat-bubble-row theirs"><div class="chat-bubble">영환아 형 아파</div></div>
+                <div class="chat-bubble-row mine"><div class="chat-bubble">왜? 어디가??</div></div>
+                <div class="chat-bubble-row theirs"><div class="chat-bubble">널 못봐서 내 마음이 ㅋ</div></div>
+
+                <div class="date-divider">10월 24일</div>
+                <div class="chat-bubble-row theirs"><div class="chat-bubble">보고 싶어</div></div>
+                <div class="chat-bubble-row theirs"><div class="chat-bubble">26일 언제오냐</div></div>
+                <div class="chat-bubble-row mine"><div class="chat-bubble">쫌만 참아</div></div>
+
+                <div class="date-divider">10월 25일</div>
+                <div class="chat-bubble-row theirs"><div class="chat-bubble">내일 전화 하면 내려와</div></div>
+                <div class="chat-bubble-row mine"><div class="chat-bubble">ㅇㅇ</div></div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input-text" placeholder="메시지를 입력하세요..." onkeypress="if(event.key==='Enter') sendKakaoMessage()">
+                <button class="chat-send-btn" onclick="sendKakaoMessage()">전송</button>
+            </div>
+        </div>
+
+        <!-- 3-6. 전화 수신 화면 -->
+        <div id="incoming-call-screen" class="hidden">
+            <div class="incoming-info">
+                <div class="call-status-text">카카오톡 보이스톡 수신중</div>
+                <h2>정형준 ♥</h2>
+            </div>
+            <div class="incoming-actions">
+                <button class="call-action-btn decl-btn" onclick="declineCall()">📞<span style="font-size: 11px; margin-top: 4px;">거절</span></button>
+                <button class="call-action-btn accept-btn" onclick="acceptCall()">📞<span style="font-size: 11px; margin-top: 4px;">통화</span></button>
+            </div>
+        </div>
+
+        <!-- 통화 중 화면 -->
+        <div id="active-call-screen" class="hidden" onclick="progressCallDialogue()">
+            <div class="incoming-info">
+                <div class="call-status-text" id="call-timer">00:05</div>
+                <h2>정형준 ♥</h2>
+            </div>
+            <div class="call-dialogue-box">
+                <span id="call-dialogue-text">화면을 터치하여 대화를 진행하세요.</span>
+            </div>
+            <div style="font-size: 13px; opacity: 0.6; text-align: center;">화면을 터치하면 다음 대사가 나옵니다</div>
+        </div>
+
+        <!-- 캘린더 어플 -->
+        <div id="calendar-app" class="app-screen hidden">
+            <div class="app-header">
+                <span>10월 캘린더</span>
+                <button class="back-btn" onclick="goHome()">홈</button>
+            </div>
+            <div class="cal-grid-view">
+                <div class="cal-day-header">일</div>
+                <div class="cal-day-header">월</div>
+                <div class="cal-day-header">화</div>
+                <div class="cal-day-header">수</div>
+                <div class="cal-day-header">목</div>
+                <div class="cal-day-header">금</div>
+                <div class="cal-day-header">토</div>
+                <!-- 달력 날짜 채우기 -->
+                <div class="cal-date-cell" style="opacity: 0.3;">26</div>
+                <div class="cal-date-cell" style="opacity: 0.3;">27</div>
+                <div class="cal-date-cell" style="opacity: 0.3;">28</div>
+                <div class="cal-date-cell" style="opacity: 0.3;">29</div>
+                <div class="cal-date-cell" style="opacity: 0.3;">30</div>
+                <div class="cal-date-cell">1</div>
+                <div class="cal-date-cell">2</div>
+                <div class="cal-date-cell">3</div>
+                <div class="cal-date-cell">4</div>
+                <div class="cal-date-cell">5</div>
+                <div class="cal-date-cell">6</div>
+                <div class="cal-date-cell">7</div>
+                <div class="cal-date-cell">8</div>
+                <div class="cal-date-cell">9</div>
+                <div class="cal-date-cell">10</div>
+                <div class="cal-date-cell">11</div>
+                <div class="cal-date-cell">12</div>
+                <div class="cal-date-cell">13</div>
+                <div class="cal-date-cell">14</div>
+                <div class="cal-date-cell">15</div>
+                <div class="cal-date-cell">16</div>
+                <div class="cal-date-cell">17</div>
+                <div class="cal-date-cell">18</div>
+                <div class="cal-date-cell">19</div>
+                <div class="cal-date-cell">20</div>
+                <div class="cal-date-cell">21</div>
+                <div class="cal-date-cell">22</div>
+                <div class="cal-date-cell">23</div>
+                <div class="cal-date-cell">24</div>
+                <div class="cal-date-cell">25</div>
+                <div class="cal-date-cell marked">26<br><span style="font-size:9px;">데이트♥</span></div>
+                <div class="cal-date-cell">27</div>
+                <div class="cal-date-cell">28</div>
+                <div class="cal-date-cell">29</div>
+                <div class="cal-date-cell">30</div>
+                <div class="cal-date-cell">31</div>
+            </div>
+        </div>
+
+        <!-- 하단 홈 바 -->
+        <div class="home-bar" onclick="goHome()"></div>
+    </div>
+
+    <!-- PIN 모달 및 상호작용 제어 자바스크립트 -->
+    <script>
+        let enteredPin = "";
+        const correctPin = "0911";
+
+        function showPinModal() {
+            enteredPin = "";
+            updatePinDots();
+            document.getElementById('pin-modal').classList.remove('hidden');
+        }
+
+        function hidePinModal() {
+            document.getElementById('pin-modal').classList.add('hidden');
+        }
+
+        function pressKey(num) {
+            if (num === 'del') {
+                enteredPin = enteredPin.slice(0, -1);
+            } else {
+                if (enteredPin.length < 4) {
+                    enteredPin += num;
+                }
+            }
+            updatePinDots();
+
+            if (enteredPin.length === 4) {
+                if (enteredPin === correctPin) {
+                    setTimeout(() => {
+                        hidePinModal();
+                        document.getElementById('lock-screen').classList.add('hidden');
+                        document.getElementById('home-screen').classList.remove('hidden');
+                    }, 200);
+                } else {
+                    const dots = document.getElementById('pin-dots');
+                    dots.classList.add('shake');
+                    setTimeout(() => {
+                        dots.classList.remove('shake');
+                        enteredPin = "";
+                        updatePinDots();
+                    }, 400);
+                }
+            }
+        }
+
+        function updatePinDots() {
+            const dots = document.getElementById('pin-dots').children;
+            for (let i = 0; i < dots.length; i++) {
+                if (i < enteredPin.length) {
+                    dots[i].classList.add('filled');
+                } else {
+                    dots[i].classList.remove('filled');
+                }
+            }
+        }
+
+        function openApp(appId) {
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById(appId).classList.remove('hidden');
+        }
+
+        function goHome() {
+            // 모든 앱 화면 숨기기
+            const screens = document.querySelectorAll('.app-screen, #kakao-chat-room, #incoming-call-screen, #active-call-screen');
+            screens.forEach(s => s.classList.add('hidden'));
+            document.getElementById('lock-screen').classList.add('hidden');
+            document.getElementById('home-screen').classList.remove('hidden');
+        }
+
+        function toggleSearchHistory() {
+            const main = document.getElementById('naver-main-content');
+            const history = document.getElementById('search-history-view');
+            if (history.style.display === 'block') {
+                history.style.display = 'none';
+                main.style.display = 'block';
+            } else {
+                main.style.display = 'none';
+                history.style.display = 'block';
+            }
+        }
+
+        function switchKakaoTab(tab) {
+            document.getElementById('tab-friends').classList.remove('active');
+            document.getElementById('tab-chats').classList.remove('active');
+            document.getElementById('kakao-friends-list').classList.add('hidden');
+            document.getElementById('kakao-chats-list').classList.add('hidden');
+
+            if (tab === 'friends') {
+                document.getElementById('tab-friends').classList.add('active');
+                document.getElementById('kakao-friends-list').classList.remove('hidden');
+            } else {
+                document.getElementById('tab-chats').classList.add('active');
+                document.getElementById('kakao-chats-list').classList.remove('hidden');
+            }
+        }
+
+        function openKakaoChat() {
+            document.getElementById('kakao-chat-room').classList.remove('hidden');
+        }
+
+        function closeKakaoChat() {
+            document.getElementById('kakao-chat-room').classList.add('hidden');
+        }
+
+        // 카카오톡 메시지 전송 및 자동 답변 로직
+        function sendKakaoMessage() {
+            const input = document.getElementById('chat-input-text');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const container = document.getElementById('chat-messages-container');
+
+            // 내 메시지 추가
+            const myRow = document.createElement('div');
+            myRow.className = 'chat-bubble-row mine';
+            myRow.innerHTML = `<div class="chat-bubble">${text}</div>`;
+            container.appendChild(myRow);
+            input.value = "";
+            container.scrollTop = container.scrollHeight;
+
+            // 조건 3: "목소리" 단어 포함 시 1초 후 전화 수신 화면으로 전환
+            if (text.includes("목소리")) {
+                setTimeout(() => {
+                    document.getElementById('incoming-call-screen').classList.remove('hidden');
+                }, 1000);
+                return;
+            }
+
+            // 조건 1 & 2: 상대방 답변 자동 생성
+            setTimeout(() => {
+                let replyText = "";
+                if (text.includes("보고 싶어") || text.includes("보고싶어") || text.includes("사랑해") || text.includes("좋아해")) {
+                    replyText = "나도";
+                } else if (text.includes("형") || text.includes("형준이형") || text.includes("형아") || text.includes("자기야")) {
+                    const randomReplies = ["?", "ㅇㅇ", "왜", "왜?"];
+                    replyText = randomReplies[Math.floor(Math.random() * randomReplies.length)];
+                }
+
+                if (replyText) {
+                    const theirRow = document.createElement('div');
+                    theirRow.className = 'chat-bubble-row theirs';
+                    theirRow.innerHTML = `<div class="chat-bubble">${replyText}</div>`;
+                    container.appendChild(theirRow);
+                    container.scrollTop = container.scrollHeight;
+                }
+            }, 600);
+        }
+
+        // 전화 수신 화면 액션
+        function declineCall() {
+            document.getElementById('incoming-call-screen').classList.add('hidden');
+        }
+
+        function acceptCall() {
+            document.getElementById('incoming-call-screen').classList.add('hidden');
+            document.getElementById('active-call-screen').classList.remove('hidden');
+            currentDialogueIndex = 0;
+            updateCallDialogueDisplay();
+        }
+
+        // 통화 중 대사 및 화자 색상 데이터
+        const callDialogues = [
+            { text: "여보세요?", color: "#34c759" },
+            { text: "어.", color: "#ff9500" },
+            { text: "어 이러고있네 뭐하고있는데?", color: "#34c759" },
+            { text: "…걍 있는데.. 왜 전화 했어", color: "#ff9500" },
+            { text: "목소리 듣고싶어서", color: "#34c759" },
+            { text: "남자친구가 전화도 못걸어?", color: "#34c759" },
+            { text: "빡세다 빡세 박영환 남친하기 힘들어~", color: "#34c759" },
+            { text: "…", color: "#ff9500" },
+            { text: "ㅋㅋㅋㅎㅋㅋㅎ 사랑해", color: "#34c759" },
+            { text: "…", color: "#ff9500" },
+            { text: "이땐 너도 사랑한다고 하면 돼", color: "#34c759" },
+            { text: ".. 사랑해", color: "#ff9500" }
+        ];
+        let currentDialogueIndex = 0;
+
+        function updateCallDialogueDisplay() {
+            const dialogueObj = callDialogues[currentDialogueIndex];
+            const dialogueTextElement = document.getElementById('call-dialogue-text');
+            dialogueTextElement.innerText = dialogueObj.text;
+            dialogueTextElement.style.color = dialogueObj.color;
+        }
+
+        function progressCallDialogue() {
+            currentDialogueIndex++;
+            if (currentDialogueIndex < callDialogues.length) {
+                updateCallDialogueDisplay();
+            } else {
+                // 통화 종료 후 카톡방으로 복귀
+                document.getElementById('active-call-screen').classList.add('hidden');
+                // 카카오톡 채팅방이 열려있도록 설정
+                document.getElementById('kakao-chat-room').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
