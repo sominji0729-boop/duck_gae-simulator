@@ -589,14 +589,15 @@
         .avatar {
             width: 50px;
             height: 50px;
-            background: #e1e2e6;
+            background: #ffe600;
             border-radius: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            color: #555;
+            color: #3c1e1e;
             position: relative;
+            font-size: 16px;
         }
 
         .chat-info {
@@ -613,6 +614,14 @@
         .chat-last-msg {
             font-size: 13px;
             color: #888;
+        }
+
+        .profile-section-title {
+            padding: 12px 20px 4px 20px;
+            font-size: 12px;
+            color: #888;
+            font-weight: 600;
+            background: #fff;
         }
 
         /* 카카오톡 채팅방 상세 */
@@ -1078,17 +1087,48 @@
             </div>
             <!-- 친구 탭 내용 -->
             <div id="kakao-friends-list" class="kakao-list">
-                <div class="chat-room-item" onclick="openKakaoChat()">
-                    <div class="avatar" style="background: #ffe600; color: #3c1e1e;">정</div>
+                <!-- 내 프로필 -->
+                <div class="profile-section-title">내 프로필</div>
+                <div class="chat-room-item" style="border-bottom: 1px solid #eee;">
+                    <div class="avatar" style="background: #e1e2e6; color: #555;">박</div>
                     <div class="chat-info">
-                        <div class="chat-name">정형준 ♥</div>
-                        <div class="chat-last-msg">내일 전화 하면 내려와</div>
+                        <div class="chat-name">박영환</div>
+                        <div class="chat-last-msg">.</div>
                     </div>
                 </div>
-                <div class="chat-item-simple" style="padding: 10px 20px; font-size: 14px; color: #666; border-bottom: 1px solid #f9f9f9;">슬기누나</div>
-                <div class="chat-item-simple" style="padding: 10px 20px; font-size: 14px; color: #666; border-bottom: 1px solid #f9f9f9;">한솔이형</div>
-                <div class="chat-item-simple" style="padding: 10px 20px; font-size: 14px; color: #666; border-bottom: 1px solid #f9f9f9;">수현이형</div>
-                <div class="chat-item-simple" style="padding: 10px 20px; font-size: 14px; color: #666;">김일영</div>
+
+                <!-- 친구 목록 -->
+                <div class="profile-section-title">친구</div>
+                <div class="chat-room-item" onclick="openKakaoChat()">
+                    <div class="avatar" style="background: #e1e2e6; color: #555;">정</div>
+                    <div class="chat-info">
+                        <div class="chat-name">정형준 ♥</div>
+                    </div>
+                </div>
+                <div class="chat-room-item">
+                    <div class="avatar" style="background: #e1e2e6; color: #555;">슬</div>
+                    <div class="chat-info">
+                        <div class="chat-name">슬기누나</div>
+                    </div>
+                </div>
+                <div class="chat-room-item">
+                    <div class="avatar" style="background: #e1e2e6; color: #555;">한</div>
+                    <div class="chat-info">
+                        <div class="chat-name">한솔이형</div>
+                    </div>
+                </div>
+                <div class="chat-room-item">
+                    <div class="avatar" style="background: #e1e2e6; color: #555;">수</div>
+                    <div class="chat-info">
+                        <div class="chat-name">수현이형</div>
+                    </div>
+                </div>
+                <div class="chat-room-item">
+                    <div class="avatar" style="background: #e1e2e6; color: #555;">김</div>
+                    <div class="chat-info">
+                        <div class="chat-name">김일영</div>
+                    </div>
+                </div>
             </div>
             <!-- 채팅 탭 내용 -->
             <div id="kakao-chats-list" class="kakao-list hidden">
